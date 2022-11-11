@@ -1,0 +1,11 @@
+{
+   "gpu": "0",
+   "num_of_clients": 100,
+   "c_fraction": 0.1,
+   "epoch": 5,
+   "batch_size": 10,
+   "model_name": "mnist_cnn",
+   "learning_rate": 0.01,
+   "dataset": "mnist",
+   "num_comm": 100
+}
