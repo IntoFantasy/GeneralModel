@@ -6,15 +6,16 @@ import pickle
 import torchvision
 from torchvision import transforms as transforms
 
+
 class GetDataSet(object):
     def __init__(self, dataSetName, isIID):
         self.name = dataSetName
-        self.train_data = None # 训练集
-        self.train_label = None # 标签
-        self.train_data_size = None # 训练数据的大小
-        self.test_data = None   # 测试数据集
+        self.train_data = None  # 训练集
+        self.train_label = None  # 标签
+        self.train_data_size = None  # 训练数据的大小
+        self.test_data = None  # 测试数据集
         self.test_label = None  # 测试的标签
-        self.test_data_size = None # 测试集数据Size
+        self.test_data_size = None  # 测试集数据Size
 
         self._index_in_train_epoch = 0
 
@@ -47,7 +48,7 @@ class GetDataSet(object):
         # print("-"*5+"train_images"+"-"*5)
         # 输出第一张图片
 
-        #print(train_images[0].reshape(28,28))
+        # print(train_images[0].reshape(28,28))
         # print(train_images.shape) # (60000, 28, 28, 1) 一共60000 张图片，每一张是28*28*1
         # print('-'*22+"\n")
         train_labels = extract_labels(train_labels_path)
@@ -62,7 +63,7 @@ class GetDataSet(object):
         test_labels = extract_labels(test_labels_path)
         # print("-" * 5 + "test_labels" + "-" * 5)
         # print(test_labels.shape) # (10000, 10) 10000维
-        #print(train_labels) # 一个对角矩阵
+        # print(train_labels) # 一个对角矩阵
         # print('-' * 22 + "\n")
 
         assert train_images.shape[0] == train_labels.shape[0]
@@ -77,7 +78,7 @@ class GetDataSet(object):
         # 讲图片每一张图片变成28*28 = 784
         # reshape(60000,28*28)
         train_images = train_images.reshape(train_images.shape[0], train_images.shape[1] * train_images.shape[2])
-        print(train_images.shape) #
+        print(train_images.shape)  #
         test_images = test_images.reshape(test_images.shape[0], test_images.shape[1] * test_images.shape[2])
 
         train_images = train_images.astype(np.float32)
@@ -98,7 +99,7 @@ class GetDataSet(object):
                 然后将其划分为200组大小为300的数据切片，然后分给每个Client两个切片。
         '''
         if isIID:
-            #一个参数 默认起点0，步长为1 输出：[0 1 2]
+            # 一个参数 默认起点0，步长为1 输出：[0 1 2]
             # a = np.arange(3)
             # 一共60000个
             order = np.arange(self.train_data_size)
@@ -138,8 +139,7 @@ class GetDataSet(object):
             self.train_data = train_images[order]
             self.train_label = train_labels[order]
 
-
-        #print(self.train_label[0:10])
+        # print(self.train_label[0:10])
 
         self.test_data = test_images
         self.test_label = test_labels
@@ -210,6 +210,7 @@ class GetDataSet(object):
         self.test_data = test_images
         self.test_label = test_labels
 
+
 def _read32(bytestream):
     dt = np.dtype(np.uint32).newbyteorder('>')
     return np.frombuffer(bytestream.read(4), dtype=dt)[0]
@@ -222,8 +223,8 @@ def extract_images(filename):
         magic = _read32(bytestream)
         if magic != 2051:
             raise ValueError(
-                    'Invalid magic number %d in MNIST image file: %s' %
-                    (magic, filename))
+                'Invalid magic number %d in MNIST image file: %s' %
+                (magic, filename))
         num_images = _read32(bytestream)
         rows = _read32(bytestream)
         cols = _read32(bytestream)
@@ -249,17 +250,17 @@ def extract_labels(filename):
         magic = _read32(bytestream)
         if magic != 2049:
             raise ValueError(
-                    'Invalid magic number %d in MNIST label file: %s' %
-                    (magic, filename))
+                'Invalid magic number %d in MNIST label file: %s' %
+                (magic, filename))
         num_items = _read32(bytestream)
         buf = bytestream.read(num_items)
         labels = np.frombuffer(buf, dtype=np.uint8)
         return dense_to_one_hot(labels)
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     'test data set'
-    mnistDataSet = GetDataSet('mnist', 0) # test NON-IID
+    mnistDataSet = GetDataSet('mnist', 0)  # test NON-IID
     if type(mnistDataSet.train_data) is np.ndarray and type(mnistDataSet.test_data) is np.ndarray and \
             type(mnistDataSet.train_label) is np.ndarray and type(mnistDataSet.test_label) is np.ndarray:
         print('the type of data is numpy ndarray')
@@ -268,4 +269,3 @@ if __name__=="__main__":
     print('the shape of the train data set is {}'.format(mnistDataSet.train_data.shape))
     print('the shape of the test data set is {}'.format(mnistDataSet.test_data.shape))
     print(mnistDataSet.train_label[0:100], mnistDataSet.train_label[11000:11100])
-

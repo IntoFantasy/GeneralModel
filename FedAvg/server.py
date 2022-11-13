@@ -13,7 +13,7 @@ import random
 import serverManange
 
 parser = serverSetting.parse_args()
-
+random.seed(43)
 
 def test_mkdir(path):
     if not os.path.isdir(path):
@@ -109,10 +109,10 @@ if __name__ == "__main__":
         clients_in_comm = ['client{}'.format(i) for i in order[0:num_in_comm]]
 
         print("客户端" + str(clients_in_comm))
-        accuracy_list_epoch = serverManange.communicate(clients_in_comm, global_parameters, args, myClients, net,
+        serverManange.communicate(clients_in_comm, global_parameters, args, myClients, net,
                                                         loss_func, opti,
-                                                        testDataLoader, dev)
-        serverManange.mark_on_client(accuracy_list_epoch, client_mark)
+                                                        testDataLoader, dev, client_mark)
+        # serverManange.mark_on_client(accuracy_list_epoch, client_mark)
         # sum_parameters = {}
         # parameters_num = {}
         # # 每个Client基于当前模型参数和自己的数据训练并更新模型
@@ -166,13 +166,15 @@ if __name__ == "__main__":
         if not accuracy_list:
             accuracy_list.append(sum_accu / num)
         else:
+            # 回滚
             if sum_accu / num < accuracy_list[-1] and ((accuracy_list[-1] - sum_accu / num) / accuracy_list[-1] < 1 / 8
                                                        or random.random() > args["AdoptForBad"]):
                 net.load_state_dict(pre_parameters, strict=True)
                 print("reload")
             else:
                 accuracy_list.append(sum_accu / num)
-
+            # 不回滚
+            # accuracy_list.append(sum_accu / num)
         test_txt.write("communicate round " + str(i + 1) + "  ")
         test_txt.write('accuracy: ' + str(float(sum_accu / num)) + "\n")
         # test_txt.close()
@@ -185,5 +187,5 @@ if __name__ == "__main__":
                                                                                                 args['learning_rate'],
                                                                                                 args['num_of_clients'],
                                                                                                 args['cfraction'])))
-
+    print(accuracy_list[-1])
     test_txt.close()

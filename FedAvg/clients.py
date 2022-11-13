@@ -163,7 +163,7 @@ class ClientsGroup(object):
 
             # 创建一个客户端
             # 实验设置调皮用户
-            if i == 15:
+            if i % 5 == 0:
                 someone = NaughtClient(TensorDataset(torch.tensor(local_data), torch.tensor(local_label)), self.dev)
             else:
                 someone = client(TensorDataset(torch.tensor(local_data), torch.tensor(local_label)), self.dev)

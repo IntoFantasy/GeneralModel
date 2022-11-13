@@ -32,17 +32,19 @@ def logMax(clients_in_com, client_mark):
     log_sum = 0
     client_weight = {}
     for client in clients_in_com:
-        log_sum += math.log(client_mark[client] + 1)
+        log_sum += math.log(client_mark[client] + 1, 4)
     for client in clients_in_com:
-        client_weight[client] = math.log(client_mark[client] + 1) / log_sum
+        client_weight[client] = math.log(client_mark[client] + 1, 4) / log_sum
     return client_weight
 
 
 # 与用户进行通讯
-def communicate(clients_in_comm, global_parameters, args, myClients, net, loss_func, opti, testDataLoader, dev):
+def communicate(clients_in_comm, global_parameters, args, myClients, net, loss_func, opti, testDataLoader, dev,
+                client_mark):
     accuracy_dict = {}
-    sum_parameters = {}
-    parameters_num = {}
+    # 存储每个用户提交的层数
+    layer_client = {}
+    client_model = {}
     # 每个Client基于当前模型参数和自己的数据训练并更新模型
     # 返回每个Client更新后的参数
     for client in clients_in_comm:
@@ -55,15 +57,23 @@ def communicate(clients_in_comm, global_parameters, args, myClients, net, loss_f
         accuracy_rate = accuracy(complemented_model, testDataLoader, dev)
         accuracy_dict[client] = accuracy_rate
         print(client + ' accuracy: {}'.format(accuracy_rate))
-        # 对所有的Client返回的参数累加（最后取平均值）
+
+        client_model[client] = local_parameters
         for key, var in local_parameters.items():
-            sum_parameters[key] = sum_parameters.get(key, 0) + var
-            parameters_num[key] = parameters_num.get(key, 0) + 1
+            if key not in layer_client:
+                layer_client[key] = [client]
+            else:
+                layer_client[key].append(client)
+
     # 取平均值，得到本次通信中Server得到的更新后的模型参数
+    # mark_on_client(accuracy_dict, client_mark)
     for key in global_parameters:
-        if key in sum_parameters:
-            global_parameters[key] = (sum_parameters[key] / parameters_num[key])
-    return accuracy_dict
+        if key in layer_client:
+            average_parameter = 0
+            client_weight = logMax(layer_client[key], client_mark)
+            for client, weight in client_weight.items():
+                average_parameter += weight * client_model[client][key]
+            global_parameters[key] = average_parameter
 
 
 # 信用分机制

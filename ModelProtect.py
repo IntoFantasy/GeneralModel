@@ -4,6 +4,7 @@ from typing import List, Dict, Tuple
 from collections import OrderedDict
 
 model_dropout = torch.nn.Dropout(0.1)
+random.seed(43)
 
 
 def noise_add(model, device, eps):
