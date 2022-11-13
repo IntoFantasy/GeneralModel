@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import torch
 from torch.utils.data import TensorDataset
@@ -37,9 +39,6 @@ class client(object):
                 # 模型上传入数据
                 preds = Net(data)
                 # 计算损失函数
-                '''
-                    这里应该记录一下模型得损失值 写入到一个txt文件中
-                '''
                 loss = lossFun(preds, label)
                 # 反向传播
                 loss.backward()
@@ -54,6 +53,52 @@ class client(object):
 
     def local_val(self):
         pass
+
+
+class NaughtClient(client):
+    def __init__(self, trainDataSet, dev):
+        super(NaughtClient, self).__init__(trainDataSet, dev)
+
+    def localUpdate(self, localEpoch, localBatchSize, Net, lossFun, opti, global_parameters):
+        print("naught client is on")
+        '''
+            param: localEpoch 当前Client的迭代次数
+            param: localBatchSize 当前Client的batchsize大小
+            param: Net Server共享的模型
+            param: LossFun 损失函数
+            param: opti 优化函数
+            param: global_parmeters 当前通讯中最全局参数
+            return: 返回当前Client基于自己的数据训练得到的新的模型参数
+        '''
+        # 加载当前通信中最新全局参数
+        # 传入网络模型，并加载global_parameters参数的
+        Net.load_state_dict(global_parameters, strict=True)
+        # 载入Client自有数据集
+        # 加载本地数据
+        self.train_dl = DataLoader(self.train_ds, batch_size=localBatchSize, shuffle=True)
+        # 设置迭代次数
+        for epoch in range(localEpoch):
+            for data, label in self.train_dl:
+                # 加载到GPU上
+                data, label = data.to(self.dev), label.to(self.dev)
+                label.zero_()
+                # 模型上传入数据
+                preds = Net(data)
+                # 计算损失函数
+                '''
+                    这里应该记录一下模型得损失值 写入到一个txt文件中
+                '''
+                loss = lossFun(preds, label)
+                # 反向传播
+                loss.backward()
+                # 计算梯度，并更新梯度
+                opti.step()
+                # 将梯度归零，初始化梯度
+                opti.zero_grad()
+        # 返回当前Client基于自己的数据训练得到的新的模型参数
+        device = next(Net.parameters()).device
+        modelProtect = model_protect(Net, device)
+        return modelProtect
 
 
 class ClientsGroup(object):
@@ -117,7 +162,11 @@ class ClientsGroup(object):
             local_label = np.argmax(local_label, axis=1)
 
             # 创建一个客户端
-            someone = client(TensorDataset(torch.tensor(local_data), torch.tensor(local_label)), self.dev)
+            # 实验设置调皮用户
+            if i == 15:
+                someone = NaughtClient(TensorDataset(torch.tensor(local_data), torch.tensor(local_label)), self.dev)
+            else:
+                someone = client(TensorDataset(torch.tensor(local_data), torch.tensor(local_label)), self.dev)
             # 为每一个clients 设置一个名字
             # client10
             self.clients_set['client{}'.format(i)] = someone
@@ -125,12 +174,12 @@ class ClientsGroup(object):
 
 if __name__ == "__main__":
     MyClients = ClientsGroup('mnist', True, 100, 0)
-    print(client)
-    print(MyClients.clients_set['client10'].train_ds[0:10])
+    # print(client)
+    # print(MyClients.clients_set['client10'].train_ds[0:10])
     train_ids = MyClients.clients_set['client10'].train_ds[0:10]
     i = 0
     for x_train in train_ids[0]:
         print("client10 数据:" + str(i))
         print(x_train)
         i = i + 1
-    print(MyClients.clients_set['client11'].train_ds[400:500])
+    # print(MyClients.clients_set['client11'].train_ds[400:500])

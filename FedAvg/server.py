@@ -8,9 +8,11 @@ from torch import optim
 from Models import Mnist_2NN, Mnist_CNN
 from clients import ClientsGroup, client
 from model.WideResNet import WideResNet
-import parameter
+import serverSetting
+import random
+import serverManange
 
-parser = parameter.parse_args()
+parser = serverSetting.parse_args()
 
 
 def test_mkdir(path):
@@ -81,7 +83,7 @@ if __name__ == "__main__":
     '''
     myClients = ClientsGroup('mnist', args['IID'], args['num_of_clients'], dev)
     testDataLoader = myClients.test_data_loader
-
+    client_mark = {'client{}'.format(i): 1 for i in range(args['num_of_clients'])}
     # ---------------------------------------以上准备工作已经完成------------------------------------------#
     # 每次随机选取10个Clients
     num_in_comm = int(max(args['num_of_clients'] * args['cfraction'], 1))
@@ -97,6 +99,7 @@ if __name__ == "__main__":
         global_parameters[key] = var.clone()
 
     # num_comm 表示通信次数
+    accuracy_list = []
     for i in range(args['num_comm']):
         print("communicate round {}".format(i + 1))
 
@@ -106,33 +109,36 @@ if __name__ == "__main__":
         clients_in_comm = ['client{}'.format(i) for i in order[0:num_in_comm]]
 
         print("客户端" + str(clients_in_comm))
-
-        sum_parameters = {}
-        parameters_num = {}
-        # 每个Client基于当前模型参数和自己的数据训练并更新模型
-        # 返回每个Client更新后的参数
-        for client in tqdm(clients_in_comm):
-            # 获取当前Client训练得到的参数
-            # 这一行代码表示Client端的训练函数，我们详细展开：
-            # local_parameters 得到客户端的局部变量
-            local_parameters = myClients.clients_set[client].localUpdate(args['epoch'], args['batchsize'], net,
-                                                                         loss_func, opti, global_parameters)
-            # 对所有的Client返回的参数累加（最后取平均值）
-            for key, var in local_parameters.items():
-                sum_parameters[key] = sum_parameters.get(key, 0) + var
-                parameters_num[key] = parameters_num.get(key, 0) + 1
-
-            # if sum_parameters is None:
-            #     sum_parameters = {}
-            #     for key, var in local_parameters.items():
-            #         sum_parameters[key] = var.clone()
-            # else:
-            #     for var in sum_parameters:
-            #         sum_parameters[var] = sum_parameters[var] + local_parameters[var]
-        # 取平均值，得到本次通信中Server得到的更新后的模型参数
-        for key in global_parameters:
-            if key in sum_parameters:
-                global_parameters[key] = (sum_parameters[key] / parameters_num[key])
+        accuracy_list_epoch = serverManange.communicate(clients_in_comm, global_parameters, args, myClients, net,
+                                                        loss_func, opti,
+                                                        testDataLoader, dev)
+        serverManange.mark_on_client(accuracy_list_epoch, client_mark)
+        # sum_parameters = {}
+        # parameters_num = {}
+        # # 每个Client基于当前模型参数和自己的数据训练并更新模型
+        # # 返回每个Client更新后的参数
+        # for client in tqdm(clients_in_comm):
+        #     # 获取当前Client训练得到的参数
+        #     # 这一行代码表示Client端的训练函数，我们详细展开：
+        #     # local_parameters 得到客户端的局部变量
+        #     local_parameters = myClients.clients_set[client].localUpdate(args['epoch'], args['batchsize'], net,
+        #                                                                  loss_func, opti, global_parameters)
+        #     # 对所有的Client返回的参数累加（最后取平均值）
+        #     for key, var in local_parameters.items():
+        #         sum_parameters[key] = sum_parameters.get(key, 0) + var
+        #         parameters_num[key] = parameters_num.get(key, 0) + 1
+        #
+        #     # if sum_parameters is None:
+        #     #     sum_parameters = {}
+        #     #     for key, var in local_parameters.items():
+        #     #         sum_parameters[key] = var.clone()
+        #     # else:
+        #     #     for var in sum_parameters:
+        #     #         sum_parameters[var] = sum_parameters[var] + local_parameters[var]
+        # # 取平均值，得到本次通信中Server得到的更新后的模型参数
+        # for key in global_parameters:
+        #     if key in sum_parameters:
+        #         global_parameters[key] = (sum_parameters[key] / parameters_num[key])
 
         # test_txt.write("communicate round " + str(i + 1) + str('accuracy: {}'.format(sum_accu / num)) + "\n")
 
@@ -145,6 +151,7 @@ if __name__ == "__main__":
         # 通讯的频率
         # if (i + 1) % args['val_freq'] == 0:
         #  加载Server在最后得到的模型参数
+        pre_parameters = net.state_dict()
         net.load_state_dict(global_parameters, strict=True)
         sum_accu = 0
         num = 0
@@ -156,6 +163,15 @@ if __name__ == "__main__":
             sum_accu += (preds == label).float().mean()
             num += 1
         print("\n" + 'accuracy: {}'.format(sum_accu / num))
+        if not accuracy_list:
+            accuracy_list.append(sum_accu / num)
+        else:
+            if sum_accu / num < accuracy_list[-1] and ((accuracy_list[-1] - sum_accu / num) / accuracy_list[-1] < 1 / 8
+                                                       or random.random() > args["AdoptForBad"]):
+                net.load_state_dict(pre_parameters, strict=True)
+                print("reload")
+            else:
+                accuracy_list.append(sum_accu / num)
 
         test_txt.write("communicate round " + str(i + 1) + "  ")
         test_txt.write('accuracy: ' + str(float(sum_accu / num)) + "\n")

@@ -1,0 +1,6 @@
+{
+  "batch_size": 10,
+  "drop_rate": 0.2,
+  "layer_chosen_rate": 0.8,
+  "noise_rate": 0.05
+}

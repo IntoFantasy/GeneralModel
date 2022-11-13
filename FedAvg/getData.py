@@ -44,26 +44,26 @@ class GetDataSet(object):
         test_images_path = os.path.join(data_dir, 't10k-images-idx3-ubyte.gz')
         test_labels_path = os.path.join(data_dir, 't10k-labels-idx1-ubyte.gz')
         train_images = extract_images(train_images_path)
-        print("-"*5+"train_images"+"-"*5)
+        # print("-"*5+"train_images"+"-"*5)
         # 输出第一张图片
 
         #print(train_images[0].reshape(28,28))
-        print(train_images.shape) # (60000, 28, 28, 1) 一共60000 张图片，每一张是28*28*1
-        print('-'*22+"\n")
+        # print(train_images.shape) # (60000, 28, 28, 1) 一共60000 张图片，每一张是28*28*1
+        # print('-'*22+"\n")
         train_labels = extract_labels(train_labels_path)
-        print("-" * 5 + "train_labels" + "-" * 5)
-        print(train_labels.shape) # (60000, 10)
-        print('-'*22+"\n")
+        # print("-" * 5 + "train_labels" + "-" * 5)
+        # print(train_labels.shape) # (60000, 10)
+        # print('-'*22+"\n")
 
         test_images = extract_images(test_images_path)
-        print("-" * 5 + "test_images" + "-" * 5)
-        print(test_images.shape) # (10000, 28, 28, 1)
-        print('-' * 22 + "\n")
+        # print("-" * 5 + "test_images" + "-" * 5)
+        # print(test_images.shape) # (10000, 28, 28, 1)
+        # print('-' * 22 + "\n")
         test_labels = extract_labels(test_labels_path)
-        print("-" * 5 + "test_labels" + "-" * 5)
-        print(test_labels.shape) # (10000, 10) 10000维
+        # print("-" * 5 + "test_labels" + "-" * 5)
+        # print(test_labels.shape) # (10000, 10) 10000维
         #print(train_labels) # 一个对角矩阵
-        print('-' * 22 + "\n")
+        # print('-' * 22 + "\n")
 
         assert train_images.shape[0] == train_labels.shape[0]
         assert test_images.shape[0] == test_labels.shape[0]
@@ -132,9 +132,9 @@ class GetDataSet(object):
 
             order = np.argsort(labels)
 
-            print(order.shape)
-            print("标签下标排序")
-            print(train_labels[order[0:10]])
+            # print(order.shape)
+            # print("标签下标排序")
+            # print(train_labels[order[0:10]])
             self.train_data = train_images[order]
             self.train_label = train_labels[order]
 
