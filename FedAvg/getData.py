@@ -6,6 +6,10 @@ import pickle
 import torchvision
 from torchvision import transforms as transforms
 
+seed = 0
+
+np.random.seed(seed)
+
 
 class GetDataSet(object):
     def __init__(self, dataSetName, isIID):

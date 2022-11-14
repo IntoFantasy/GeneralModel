@@ -3,6 +3,13 @@ import numpy as np
 from tqdm import tqdm
 import math
 
+seed=0
+
+np.random.seed(seed)
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+
 
 # 测试集上验证准确率
 def accuracy(net, testDataLoader, dev):
@@ -66,7 +73,7 @@ def communicate(clients_in_comm, global_parameters, args, myClients, net, loss_f
                 layer_client[key].append(client)
 
     # 取平均值，得到本次通信中Server得到的更新后的模型参数
-    # mark_on_client(accuracy_dict, client_mark)
+    mark_on_client(accuracy_dict, client_mark)
     for key in global_parameters:
         if key in layer_client:
             average_parameter = 0

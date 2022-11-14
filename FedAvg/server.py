@@ -13,7 +13,13 @@ import random
 import serverManange
 
 parser = serverSetting.parse_args()
-random.seed(43)
+seed = 0
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+
 
 def test_mkdir(path):
     if not os.path.isdir(path):
@@ -110,8 +116,8 @@ if __name__ == "__main__":
 
         print("客户端" + str(clients_in_comm))
         serverManange.communicate(clients_in_comm, global_parameters, args, myClients, net,
-                                                        loss_func, opti,
-                                                        testDataLoader, dev, client_mark)
+                                  loss_func, opti,
+                                  testDataLoader, dev, client_mark)
         # serverManange.mark_on_client(accuracy_list_epoch, client_mark)
         # sum_parameters = {}
         # parameters_num = {}

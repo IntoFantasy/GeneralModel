@@ -3,6 +3,13 @@ import random
 from typing import List, Dict, Tuple
 from collections import OrderedDict
 
+seed=0
+
+random.seed(seed)
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+
 model_dropout = torch.nn.Dropout(0.1)
 random.seed(43)
 

@@ -7,6 +7,14 @@ from torch.utils.data import DataLoader
 from getData import GetDataSet
 from ModelProtect import *
 
+seed = 0
+
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+
 
 class client(object):
     def __init__(self, trainDataSet, dev):
@@ -163,7 +171,8 @@ class ClientsGroup(object):
 
             # 创建一个客户端
             # 实验设置调皮用户
-            if i % 5 == 0:
+            # if i % 3 == 0:
+            if i < 40:
                 someone = NaughtClient(TensorDataset(torch.tensor(local_data), torch.tensor(local_label)), self.dev)
             else:
                 someone = client(TensorDataset(torch.tensor(local_data), torch.tensor(local_label)), self.dev)
