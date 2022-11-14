@@ -13,7 +13,7 @@ import random
 import serverManange
 
 parser = serverSetting.parse_args()
-seed = 0
+seed = 42
 random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)

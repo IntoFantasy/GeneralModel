@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from getData import GetDataSet
 from ModelProtect import *
 
-seed = 0
+seed = 42
 
 random.seed(seed)
 np.random.seed(seed)
